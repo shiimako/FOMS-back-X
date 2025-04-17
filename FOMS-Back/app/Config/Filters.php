@@ -13,6 +13,11 @@ use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 
+use App\Filters\LoginFilter;
+use App\Filters\RoleFilter;
+use App\Filters\PermissionFilter;
+
+
 class Filters extends BaseFilters
 {
     /**
@@ -34,6 +39,9 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        'login'         => LoginFilter::class,
+        'role'          => RoleFilter::class,
+        'permission'    => PermissionFilter::class,
     ];
 
     /**
@@ -103,5 +111,23 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        'login' => ['before' => ['admin/*', 'mahasiswa/*', 'dosen/*']], // Pastikan login sebelum mengakses
+
+        // Role-based access control
+        'role' => [
+            'before' => [
+                'admin/*' => ['role:admin'],        // Hanya admin yang bisa akses route admin
+                'mahasiswa/*' => ['role:mahasiswa'],// Hanya mahasiswa yang bisa akses route mahasiswa
+                'dosen/*' => ['role:dosen'],        // Hanya dosen yang bisa akses route dosen
+            ]
+        ],
+
+        // Permission-based access control
+        'permission' => [
+            'before' => [
+                'admin/manage/*' => ['permission:manage-users'],  // Contoh: Cek apakah user punya permission manage-users
+            ]
+        ],
+    ];
 }

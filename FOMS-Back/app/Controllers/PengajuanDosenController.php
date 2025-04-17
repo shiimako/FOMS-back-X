@@ -17,7 +17,7 @@ class PengajuanDosenController extends ResourceController
     public function index()
     {
         $data = [
-            'message' => 'Selamat datang di API Dosen',
+            'message' => 'Selamat datang di API Pengajuan Dosen',
             'data_pengajuan_dosen' => $this->model->findAll()
         ];
         return $this->respond($data, 200);

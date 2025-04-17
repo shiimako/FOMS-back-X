@@ -10,8 +10,8 @@ class PengajuanJudulSeeder extends Seeder
     {
          $data = [
             [
-                'id_mhs' => 2,
-                'id_pengajuan_dosen' => 2,
+                'id_mhs' => '1',
+                'id_pengajuan_dosen' => '1',
                 'judul' => 'Sistem Informasi Cinta dan Kerinduan',
                 'Saran' => '',
                 'tgl_pengajuan' => '2025-04-16',

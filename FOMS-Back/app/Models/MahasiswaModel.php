@@ -14,6 +14,7 @@ class MahasiswaModel extends Model
     protected $protectFields    = true;
     protected $allowedFields    = [
                                     'id_mhs',
+                                    'id_user',
                                     'nama_mhs',
                                     'npm',
                                     'kls_mhs',

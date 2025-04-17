@@ -10,16 +10,10 @@ class PengajuanDosenSeeder extends Seeder
     {
         $data = [
             [
-                'id_dosen' => '2',
-                'id_mhs' => '1',
+                'id_dosen' => '1',
+                'id_mhs' => '2',
                 'status' => 'pending',
                 'tgl_pengajuan' => '2025-04-11',
-            ],
-            [
-                'id_dosen' => '3',
-                'id_mhs' => '2',
-                'status' => 'approved',
-                'tgl_pengajuan' => '2025-04-10',
             ],
         ];
 

@@ -4,10 +4,12 @@ namespace App\Controllers;
 
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use App\Controllers\PengajuanDosenController;
 
 class MahasiswaController extends ResourceController
 {
     protected $modelName = 'App\Models\MahasiswaModel';
+    protected $pengajuandosen = 'App\Models\PengajuanDosenModel';
     protected $format = 'json';
     /**
      * Return an array of resource objects, themselves in array format.
@@ -21,6 +23,11 @@ class MahasiswaController extends ResourceController
             'data_mahasiswa' => $this->model->findAll()
         ];
         return $this->respond($data, 200);
+    }
+
+    public function indexPengajuanDosen()
+    {
+
     }
 
     /**
