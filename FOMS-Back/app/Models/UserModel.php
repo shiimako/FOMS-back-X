@@ -4,25 +4,30 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class MahasiswaModel extends Model
+class UserModel extends Model
 {
-    protected $table            = 'mahasiswa';
-    protected $primaryKey       = 'npm';
+    protected $table            = 'users';
+    protected $primaryKey       = 'id_user';
     protected $useAutoIncrement = false;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-                                    'npm',
-                                    'id_user',
-                                    'nama_mhs',
-                                    'kls_mhs',
-                                    'jurusan_mhs',
-                                    'prodi_mhs',
-                                    'telp_mhs',
-                                    'created_at',
-                                    'updated_at',
-                                ];
+        'id_user',
+        'email',
+        'password',
+        'role',
+        'created_at',
+        'updated_at'
+    ];
+
+    public function getUserByEmailAndPassword(string $email, string $password)
+    {
+        return $this->where('email', $email)
+            ->where('password', $password)
+            ->first();
+    }
+
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -31,20 +36,18 @@ class MahasiswaModel extends Model
     protected array $castHandlers = [];
 
     // Dates
-    protected $useTimestamps = true;
+    protected $useTimestamps = false;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
+    protected $deletedField  = 'deleted_at';
 
     // Validation
-    protected $validationRules      = [
-        'npm' => 'required',
+    protected $validationRules = [
         'id_user' => 'required',
-        'nama_mhs' => 'required',
-        'kls_mhs' => 'required',
-        'jurusan_mhs' => 'required',
-        'prodi_mhs' => 'required',
-        'telp_mhs' => 'required',
+        'email' => 'required|valid_email',
+        'password' => 'required',
+        'role' => 'required'
     ];
     protected $validationMessages   = [];
     protected $skipValidation       = false;

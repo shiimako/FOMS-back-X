@@ -9,11 +9,7 @@ class MahasiswaController extends ResourceController
 {
     protected $modelName = 'App\Models\MahasiswaModel';
     protected $format = 'json';
-    /**
-     * Return an array of resource objects, themselves in array format.
-     *
-     * @return ResponseInterface
-     */
+
     public function index()
     {
         $data = [
@@ -23,24 +19,7 @@ class MahasiswaController extends ResourceController
         return $this->respond($data, 200);
     }
 
-    /**
-     * Return the properties of a resource object.
-     *
-     * @param int|string|null $id
-     *
-     * @return ResponseInterface
-     */
     public function show($id = null)
-    {
-        //
-    }
-
-    /**
-     * Return a new resource object, with default properties.
-     *
-     * @return ResponseInterface
-     */
-    public function new()
     {
         //
     }
@@ -52,16 +31,16 @@ class MahasiswaController extends ResourceController
      */
     public function create()
     {
-        $data = $this->request->getRawInput(true); // Ambil data JSON dari body request
+        $data = $this->request->getJSON(true); // Ambil data JSON dari body request
 
         if (!$this->model->insert($data)) {
-            return $this->fail($this->model->errors(), 400);
+            return $this->fail($this->model->errors());
+        } else {
+            return $this->respondCreated([
+                'message' => 'Data Mahasiswa berhasil ditambahkan',
+                'data' => $data
+            ]);
         }
-
-        return $this->respondCreated([
-            'message' => 'Data mahasiswa berhasil ditambahkan',
-            'data' => $data
-        ]);
     }
 
     /**
@@ -86,7 +65,7 @@ class MahasiswaController extends ResourceController
     public function update($id = null)
     {
         // Ambil data dari body request
-        $data = $this->request->getRawInput(true) ?? $this->request->getPost();
+        $data = $this->request->getJSON(true);
 
         // Cek apakah data mahasiswa dengan $id ada
         if (!$this->model->find($id)) {

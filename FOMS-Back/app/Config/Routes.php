@@ -15,7 +15,16 @@ $routes->set404Override();
 $routes->setAutoRoute(false);
 
 $routes->get('/', 'Home::index');
-$routes->resource('mahasiswa', ['controller' => 'MahasiswaController']);
-$routes->resource('dosen', ['controller' => 'DosenController']);
-$routes->resource('pengajuandosen', ['controller' => 'PengajuanDosenController']);
-$routes->resource('pengajuanjudul', ['controller' => 'PengajuanJudulController']);
+
+// User
+$routes->resource('user', ['controller' => 'UserController', 'placeholder' => '(:segment)']);
+$routes->post('user/login', 'UserController::login');
+
+// Mahasiswa
+$routes->resource('mahasiswa', ['controller' => 'MahasiswaController', 'placeholder' => '(:segment)']);
+
+//Dosen
+
+//PengajuanDosen
+
+//PengajuanJudul
