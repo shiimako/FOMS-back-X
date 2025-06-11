@@ -17,7 +17,7 @@ class DosenController extends ResourceController
     public function index()
     {
         $data = [
-            'message' => 'Selamat datang di API Mahasiswa',
+            'message' => 'Selamat datang di API Dosen',
             'data_dosen' => $this->model->findAll()
         ];
         return $this->respond($data, 200);
@@ -52,7 +52,7 @@ class DosenController extends ResourceController
      */
     public function create()
     {
-        $data = $this->request->getRawInput(true); // Ambil data JSON dari body request
+        $data = $this->request->getJSON(true); // Ambil data JSON dari body request
 
         if (!$this->model->insert($data)) {
             return $this->fail($this->model->errors(), 400);

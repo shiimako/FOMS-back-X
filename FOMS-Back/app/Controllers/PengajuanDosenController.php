@@ -17,11 +17,82 @@ class PengajuanDosenController extends ResourceController
     public function index()
     {
         $data = [
-            'message' => 'Selamat datang di API Dosen',
+            'message' => 'Selamat datang di API Pengajuan Dosen',
             'data_pengajuan_dosen' => $this->model->findAll()
         ];
         return $this->respond($data, 200);
     }
+
+    // Ngelihat Pengajuan Dosen by NIDN (pov Dosen)
+    public function ambildariNIDN($nidn)
+    {
+        if (!$nidn) {
+            return $this->failValidationErrors('NIDN harus diisi.');
+        }
+
+        $getnidn = $this->model->getbyNIDN($nidn);
+
+        if (!$getnidn) {
+            return $this->failNotFound('Dosen dengan NIDN = '.$nidn." tidak ada!!");
+        }
+
+        // Kalau validasi berhasil, return balik
+        return $this->respond([
+            'message' => 'Data ditemukan',
+            'data_pengajuan_dosen' => $getnidn
+        ], 200);
+    }
+
+
+    // Ngelihat Pengajuan Mahasiswa by NIDN (pov Mahasiswa)
+    public function ambildariNPM($npm)
+    {
+        if (!$npm) {
+            return $this->failValidationErrors('NPM harus diisi.');
+        }
+
+        $getnpm = $this->model->getbyNPM($npm);
+
+        if (!$getnpm) {
+            return $this->failNotFound('Mahasiswa dengan NPM = ' . $npm . " tidak ada!!");
+        }
+
+        // Kalau validasi berhasil, return balik
+        return $this->respond([
+            'message' => 'Data ditemukan',
+            'data_pengajuan_dosen' => $getnpm
+        ], 200);
+    }
+
+    public function updateDecision($id){
+
+        $data = $this->request->getJSON();
+
+        $status = $data->status ?? null;
+
+        if (!$id || !$status) {
+            return $this->failValidationErrors('id dan status harus diisi.');
+        }
+
+        $update = $this->model->giveDecision($id, $status);
+
+        if (!$update)
+        {
+            return $this->fail(
+            "Update gagal dilakukan",
+            400);
+        }
+
+        // Ambil ulang datanya
+        $data = $this->model->find($id);
+
+        return $this->respond([
+            'message' => 'Keputusan berhasil disimpan.',
+            'data_pengajuan_dosen' => $data
+        ], 200);
+
+    }
+    
 
     /**
      * Return the properties of a resource object.
@@ -52,7 +123,7 @@ class PengajuanDosenController extends ResourceController
      */
     public function create()
     {
-        $data = $this->request->getRawInput(true); // Ambil data JSON dari body request
+        $data = $this->request->getJSON(true); // Ambil data JSON dari body requestt
 
         if (!$this->model->insert($data)) {
             return $this->fail($this->model->errors(), 400);

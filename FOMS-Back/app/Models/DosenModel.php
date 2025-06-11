@@ -7,20 +7,18 @@ use CodeIgniter\Model;
 class DosenModel extends Model
 {
     protected $table            = 'dosen';
-    protected $primaryKey       = 'id_dosen';
-    protected $useAutoIncrement = true;
+    protected $primaryKey       = 'nidn';
+    protected $useAutoIncrement = false;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'id_dosen',
+        'id_user',
         'nama_dosen',
-        'NIDN',
-        'email_dosen',
         'telp_dosen',
     ];
 
-    protected bool $allowEmptyInserts = false;
+    protected bool $allowEmptyInserts = true;
     protected bool $updateOnlyChanged = true;
 
     protected array $casts = [];
@@ -28,13 +26,18 @@ class DosenModel extends Model
 
     // Dates
     protected $useTimestamps = false;
-    // protected $dateFormat    = 'datetime';
-    // protected $createdField  = 'created_at';
-    // protected $updatedField  = 'updated_at';
+    protected $dateFormat    = 'datetime';
+    protected $createdField  = 'created_at';
+    protected $updatedField  = 'updated_at';
     // protected $deletedField  = 'deleted_at';
 
     // Validation
-    protected $validationRules      = [];
+    protected $validationRules      = [
+        'nidn' => 'required',
+        'id_user' => 'required',
+        'nama_dosen' => 'required',
+        'telp_dosen' => 'required',
+    ];
     protected $validationMessages   = [];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;

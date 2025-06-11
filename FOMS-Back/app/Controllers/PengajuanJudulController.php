@@ -17,10 +17,101 @@ class PengajuanJudulController extends ResourceController
     public function index()
     {
         $data = [
-            'message' => 'Selamat datang di API Dosen',
+            'message' => 'Selamat datang di API Pengajuan Judul',
             'data_pengajuan_dosen' => $this->model->findAll()
         ];
         return $this->respond($data, 200);
+    }
+
+    public function insertJudul()
+    {
+        $data = $this->request->getJSON(true); // auto jadi array
+
+        if (empty($data['id_pengajuan_dosen']) || empty($data['npm']) || empty($data['judul'])) {
+            return $this->failValidationErrors('id_pengajuan_dosen, npm, dan judul wajib diisi.');
+        }
+
+        $insert = $this->model->insertPengajuanJudul($data);
+
+        if (!$insert) {
+            return $this->fail('Pengajuan judul gagal. Pastikan status disetujui dan npm sesuai.', 400);
+        }
+
+        return $this->respondCreated([
+            'message' => 'Pengajuan judul berhasil disimpan.',
+            'data' => $data
+        ]);
+    }
+
+    // Ngelihat Pengajuan Dosen by NIDN (pov Dosen)
+    public function ambildariNIDN($nidn)
+    {
+        if (!$nidn) {
+            return $this->failValidationErrors('NIDN harus diisi.');
+        }
+
+        $getnidn = $this->model->getbyNIDN($nidn);
+
+        if (!$getnidn) {
+            return $this->failNotFound('Dosen dengan NIDN = ' . $nidn . " tidak ada!!");
+        }
+
+        // Kalau validasi berhasil, return balik
+        return $this->respond([
+            'message' => 'Data ditemukan',
+            'data_pengajuan_dosen' => $getnidn
+        ], 200);
+    }
+
+    public function ambildariNPM($npm)
+    {
+        if (!$npm) {
+            return $this->failValidationErrors('NPM harus diisi.');
+        }
+
+        $getnpm = $this->model->getbyNPM($npm);
+
+        if (!$getnpm) {
+            return $this->failNotFound('Mahasiswa dengan NPM = ' . $npm . " tidak ada!!");
+        }
+
+        // Kalau validasi berhasil, return balik
+        return $this->respond([
+            'message' => 'Data ditemukan',
+            'data_pengajuan_dosen' => $getnpm
+        ], 200);
+    }
+
+    public function updateDecision($id)
+    {
+
+        $data = $this->request->getJSON();
+
+        $status = $data->status ?? null;
+
+        $saran = $data->saran ?? null;
+
+        if (!$id || !$status || !$saran) {
+            return $this->failValidationErrors('id, status, dan saran harus diisi.');
+        }
+
+        $update = $this->model->giveDecision($id, $status, $saran);
+
+        if (!$update) {
+            return $this->fail(
+                "Update gagal dilakukan",
+                400
+            );
+        }
+
+        // Ambil ulang datanya
+        $data = $this->model->find($id);
+
+        return $this->respond([
+            'message' => 'Keputusan berhasil disimpan.',
+            'data_pengajuan_judul' => $data
+        ], 200);
+
     }
 
     /**
@@ -63,6 +154,7 @@ class PengajuanJudulController extends ResourceController
             'data' => $data
         ]);
     }
+
 
     /**
      * Return the editable properties of a resource object.
