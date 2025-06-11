@@ -34,6 +34,7 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        'jwt'           => \App\Filters\JWTAuthFilter::class,
     ];
 
     /**
@@ -103,5 +104,12 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        'jwt' => ['before' => [
+            'mahasiswa/*',
+            'dosen/*',
+            'pengajuandosen/*',
+            'pengajuanjudul/*',
+        ]],
+    ];
 }

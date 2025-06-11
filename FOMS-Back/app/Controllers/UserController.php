@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use CodeIgniter\RESTful\ResourceController;
+use App\Libraries\JWTService;
 
 class UserController extends ResourceController
 {
@@ -38,9 +39,17 @@ class UserController extends ResourceController
             return $this->failNotFound('Email atau password salah.');
         }
 
+        $jwt = new JWTService();
+        $token = $jwt->generateToken([
+            'id_user' => $user['id_user'],
+            'email' => $user['email'],
+            'role' => $user['role']
+        ]);
+
         // Kalau validasi berhasil, bisa kirim data user atau token dsb.
         return $this->respond([
             'message' => 'Login berhasil',
+            'token' => $token,
             'user' => $user
         ], 200);
     }
