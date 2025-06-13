@@ -7,7 +7,12 @@ use Firebase\JWT\Key;
 
 class JWTService
 {
-    private $key = 'FOMS-Back'; // nama project
+    protected $key;
+
+    public function __construct(){
+    $this->key = getenv('JWT_SECRET_KEY');
+
+    }
 
     public function generateToken($data)
     {

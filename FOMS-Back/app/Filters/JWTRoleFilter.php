@@ -8,35 +8,34 @@ use CodeIgniter\Filters\FilterInterface;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-class JWTAuthFilter implements FilterInterface
+class JWTRoleFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
         $key = getenv('JWT_SECRET_KEY');// atau hardcode dulu buat testing
-
         $authHeader = $request->getHeaderLine('Authorization');
-
         if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-            return \Config\Services::response()
-                ->setJSON(['message' => 'Token tidak ditemukan.'])
-                ->setStatusCode(401);
+            return response()->setStatusCode(401)->setJSON(['message' => 'Token tidak ditemukan.']);
         }
 
-        $token = str_replace('Bearer ', '', $authHeader);
+        $token = explode(' ', $authHeader)[1];
 
         try {
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
-            // Simpan user info ke request kalau kamu mau
-            $request->userData = (array) $decoded->data;
+            $userRole = $decoded->role ?? '';
+
+            // Cek argument dari route
+            if ($arguments && !in_array($userRole, $arguments)) {
+                return response()->setStatusCode(403)->setJSON(['message' => 'Akses ditolak.']);
+            }
+
         } catch (\Exception $e) {
-            return \Config\Services::response()
-                ->setJSON(['message' => 'Token tidak valid atau kadaluarsa.'])
-                ->setStatusCode(401);
+            return response()->setStatusCode(401)->setJSON(['message' => 'Token tidak valid.']);
         }
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        // tidak perlu dipakai
+        // No post-processing
     }
 }

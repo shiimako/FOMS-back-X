@@ -2,12 +2,20 @@
 
 namespace App\Controllers;
 
+use App\Models\RefreshTokenModel;
 use CodeIgniter\RESTful\ResourceController;
 use App\Libraries\JWTService;
+use Firebase\JWT\JWT;
 
 class UserController extends ResourceController
 {
     protected $modelName = 'App\Models\UserModel';
+    protected $refreshTokenModel;
+
+    public function __construct()
+    {
+        $this->refreshTokenModel = new RefreshTokenModel();
+    }
 
     public function index()
     {
@@ -40,17 +48,78 @@ class UserController extends ResourceController
         }
 
         $jwt = new JWTService();
-        $token = $jwt->generateToken([
+        $access_token = $jwt->generateToken([
             'id_user' => $user['id_user'],
             'email' => $user['email'],
             'role' => $user['role']
         ]);
 
+        $refresh_token = bin2hex(random_bytes(64));
+
+        $this->refreshTokenModel->insert(
+            [
+                'id_user' => $user['id_user'],
+                'token' => $refresh_token,
+                'expired_at' => date('Y-m-d H:i:s', time() + (86400 * 7))
+            ]
+            );
+
         // Kalau validasi berhasil, bisa kirim data user atau token dsb.
         return $this->respond([
             'message' => 'Login berhasil',
-            'token' => $token,
+            'access_token' => $access_token,
+            'refresh_token' => $refresh_token,
             'user' => $user
+        ], 200);
+    }
+
+    public function refresh()
+    {
+        $refreshToken = $this->request->getVar('refresh_token');
+
+        // Cek token di database (misalnya pakai model)
+        $record = $this->refreshTokenModel->where('token', $refreshToken)->first();
+
+        if (!$record || strtotime($record['expired_at']) < time()) {
+            return $this->failUnauthorized('Refresh token tidak valid atau sudah kedaluwarsa.');
+        }
+
+        $user = $this->refreshTokenModel->getUser($refreshToken);
+
+        $jwt = new JWTService();
+        $new_access_token = $jwt->generateToken([
+            'id_user' => $user['id_user'],
+            'email' => $user['email'],
+            'role' => $user['role']
+        ]);
+
+        return $this->respond([
+            'new_access_token' => $new_access_token,
+        ]);
+    }
+
+    public function logout()
+    {
+        $refreshToken = $this->request->getVar('refresh_token');
+
+        if (!$refreshToken) {
+            return $this->failValidationErrors('Refresh token harus disertakan.');
+        }
+
+        $tokenData = $this->refreshTokenModel->gettoken($refreshToken);
+
+        if (!$tokenData) {
+            return $this->failNotFound('Token tidak ditemukan.');
+        }
+
+        $hapusrefresh = $this->refreshTokenModel->hapustoken($refreshToken);
+
+        if (!$hapusrefresh){
+            return $this->fail("Gagal menghapus");
+        }
+
+        return $this->respond([
+            'message' => 'Logout berhasil. Token dihapus.'
         ], 200);
     }
 
