@@ -18,6 +18,17 @@ class DosenModel extends Model
         'telp_dosen',
     ];
 
+    public function getNIDNbyID($id)
+    {
+        return $this->where('id_user', $id)->first()['nidn'] ?? null;
+    }
+
+    public function updateByUserID($id_user, $data)
+    {
+        return $this->where('id_user', $id_user)->set($data)->update();
+    }
+
+
     protected bool $allowEmptyInserts = true;
     protected bool $updateOnlyChanged = true;
 

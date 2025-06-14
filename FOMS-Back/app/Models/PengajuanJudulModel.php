@@ -41,6 +41,19 @@ class PengajuanJudulModel extends Model
             ->getResult();
     }
 
+    public function getIdentityByIDJudul($id_pengajuan_judul)
+    {
+        return $this->db->table('pengajuan_judul pj')
+            ->select('pj.id_pengajuan_judul, pd.id_pengajuan_dosen, m.npm, d.nidn')
+            ->join('pengajuan_dosen pd', 'pj.id_pengajuan_dosen = pd.id_pengajuan_dosen')
+            ->join('mahasiswa m', 'm.npm = pd.npm')
+            ->join('dosen d', 'd.nidn = pd.nidn')
+            ->where('pj.id_pengajuan_judul', $id_pengajuan_judul)
+            ->get()
+            ->getRowArray(); // kalau kamu mau ambil 1 baris aja
+    }
+
+
     public function insertPengajuanJudul($data)
     {
         $idPengajuan = $data['id_pengajuan_dosen'] ?? null;

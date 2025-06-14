@@ -28,6 +28,35 @@ class UserModel extends Model
             ->first();
     }
 
+    public function getDataDosenLengkapByID($id_user)
+    {
+        return $this->db->table('users u')
+            ->select('u.id_user, u.email, u.password, d.nidn, d.nama_dosen, d.telp_dosen')
+            ->join('dosen d', 'u.id_user = d.id_user')
+            ->where('u.id_user', $id_user)
+            ->get()
+            ->getRowArray(); // hasilnya berupa object
+    }
+
+    public function getDataMahasiswaLengkapByID($id_user)
+    {
+        return $this->db->table('users u')
+            ->select('u.id_user, u.email, u.password, m.npm, m.nama_mhs, m.kls_mhs, m.jurusan_mhs, m.prodi_mhs, m.telp_mhs')
+            ->join('mahasiswa m', 'u.id_user = m.id_user')
+            ->where('u.id_user', $id_user)
+            ->get()
+            ->getRowArray(); // hasilnya berupa object juga
+    }
+
+    public function getDataAdminLengkapByID($id_user)
+    {
+        return $this->select('id_user, u.email, u.password')
+            ->where('u.id_user', $id_user)
+            ->get()
+            ->getRowArray(); // hasilnya berupa object juga
+    }
+
+
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

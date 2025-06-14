@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\RefreshTokenModel;
+use App\Libraries\AuthHelpers;
 use CodeIgniter\RESTful\ResourceController;
 use App\Libraries\JWTService;
 use Firebase\JWT\JWT;
@@ -30,6 +31,20 @@ class UserController extends ResourceController
         ];
         return $this->respond($data, 200);
 
+    }
+
+    public function show($id = null){
+
+            $data = $this->model->find($id);
+    
+            if (!$data) {
+                return $this->failNotFound("Data dengan ID $id tidak ditemukan.");
+            }
+    
+            return $this->respond([
+                'message' => 'Data berhasil ditemukan.',
+                'data' => $data
+            ]);
     }
 
     public function login()
@@ -97,6 +112,127 @@ class UserController extends ResourceController
             'new_access_token' => $new_access_token,
         ]);
     }
+
+    public function userprofile(){
+        $user = AuthHelpers::getUserFromToken($this->request);
+
+        $id_user = $user->id_user;
+        $role = $user->role;
+
+                // Cek berdasarkan role
+                if ($role === 'mahasiswa') {
+                    $profile = $this->model->getDataMahasiswaLengkapByID($id_user);
+                    if (!$profile){
+                        return $this->failNotFound("Profil Mahasiswa tidak ditemukan");
+                    }else if ($profile['id_user'] !== $id_user){
+                        return $this->failForbidden("Anda tidak memiliki hak akses pada profil mahasiswa ini!");
+                    }
+                    return $this->respond([
+                        'message' => 'Data Profil Mahasiswa berhasil ditemukan.',
+                        'profil' => $profile
+                        ]);
+                }
+                if ($role === 'dosen') {
+                    $profile = $this->model->getDataDosenLengkapByID($id_user);
+                    if (!$profile){
+                        return $this->failNotFound("Profil Dosen tidak ditemukan");
+                    }else if ($profile['id_user'] !== $id_user){
+                        return $this->failForbidden("Anda tidak memiliki hak akses pada profil dosen ini!");
+                    }
+                    return $this->respond([
+                        'message' => 'Data Profil Dosen berhasil ditemukan.',
+                        'profil' => $profile
+                        ]);
+                }if ($role === 'admin') {
+                    $profile = $this->model->getDataAdminLengkapByID($id_user);
+                    if (!$profile) {
+                    return $this->failNotFound("Profil Admin tidak ditemukan");
+                    } else if ($profile['id_user'] !== $id_user) {
+                    return $this->failForbidden("Anda tidak memiliki hak akses pada profil admin ini!");
+                    }
+                    return $this->respond([
+                        'message' => 'Data Profil Admin berhasil ditemukan.',
+                        'profil' => $profile
+                    ]);
+                }
+
+                return $this->failForbidden("Tidak Punya Akses!!");
+     }
+
+    public function updateProfile()
+    {
+        $user = AuthHelpers::getUserFromToken($this->request);
+        $id_user = $user->id_user;
+        $role = $user->role;
+
+        $input = $this->request->getJSON(true);
+
+        // Data untuk tabel user (kalau ada)
+        $userData = [];
+        if (isset($input['email']))
+            $userData['email'] = $input['email'];
+        if (isset($input['password']))
+            $userData['password'] = password_hash($input['password'], PASSWORD_DEFAULT);
+
+        // Ambil model user utama
+        $userModel = new \App\Models\UserModel();
+
+        // Update tabel user kalau ada data
+        if (!empty($userData)) {
+            if (!$userModel->update($id_user, $userData)) {
+                return $this->fail($userModel->errors());
+            }
+        }
+
+        // Update data spesifik berdasarkan role
+        if ($role === 'mahasiswa') {
+            $mahasiswaModel = new \App\Models\MahasiswaModel();
+
+            $mhsData = array_intersect_key($input, array_flip([
+                'nama_mhs',
+                'kls_mhs',
+                'jurusan_mhs',
+                'prodi_mhs',
+                'telp_mhs'
+            ]));
+
+            if (!$mahasiswaModel->updateByUserID($id_user, $mhsData)) {
+                return $this->fail($mahasiswaModel->errors());
+            }
+
+            return $this->respond([
+                'message' => 'Profil Mahasiswa berhasil diperbarui.',
+                'updated' => ['user' => $userData, 'mahasiswa' => $mhsData]
+            ]);
+
+        } elseif ($role === 'dosen') {
+            $dosenModel = new \App\Models\DosenModel();
+
+            $dsnData = array_intersect_key($input, array_flip([
+                'nama_dosen',
+                'telp_dosen'
+            ]));
+
+            if (!$dosenModel->updateByUserID($id_user, $dsnData)) {
+                return $this->fail($dosenModel->errors());
+            }
+
+            return $this->respond([
+                'message' => 'Profil Dosen berhasil diperbarui.',
+                'updated' => ['user' => $userData, 'dosen' => $dsnData]
+            ]);
+
+        } elseif ($role === 'admin') {
+            // Admin hanya update dari tabel user
+            return $this->respond([
+                'message' => 'Profil Admin berhasil diperbarui.',
+                'updated' => ['user' => $userData]
+            ]);
+        }
+
+        return $this->failForbidden("Tidak punya akses.");
+    }
+
 
     public function logout()
     {

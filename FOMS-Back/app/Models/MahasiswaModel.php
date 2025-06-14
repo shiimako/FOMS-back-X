@@ -46,6 +46,16 @@ class MahasiswaModel extends Model
         'prodi_mhs' => 'required',
         'telp_mhs' => 'required',
     ];
+
+    public function getNPMbyID($id){
+        return $this->where('id_user', $id)->first()['npm'] ?? null;
+    }
+
+    public function updateByUserID($id_user, $data)
+    {
+        return $this->where('id_user', $id_user)->set($data)->update();
+    }
+
     protected $validationMessages   = [];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;

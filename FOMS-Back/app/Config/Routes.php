@@ -24,26 +24,41 @@ $routes->delete('user/refresh', 'UserController::logout');
 // Group dengan JWT (umum)
 $routes->group('', ['filter' => 'jwt'], function ($routes) {
 
+    $routes->get('user/profile', 'UserController::userprofile');
+    $routes->put('akun/update', 'UserController::updateProfile');
+
+
     // Admin Only
     $routes->group('admin', ['filter' => 'role:admin'], function ($routes) {
         $routes->resource('user', ['controller' => 'UserController', 'placeholder' => '(:segment)']);
         $routes->resource('dosen', ['controller' => 'DosenController', 'placeholder' => '(:segment)']);
         $routes->resource('mahasiswa', ['controller' => 'MahasiswaController', 'placeholder' => '(:segment)']);
+        $routes->resource('pengajuandosen', ['controller' => 'PengajuanDosenController', 'placeholder' => '(:segment)']);
+        $routes->resource('pengajuanjudul', ['controller' => 'PengajuanJudulController', 'placeholder' => '(:segment)']);
+    });
+
+    // Akun (Mahasiswa/Dosen) Only
+    $routes->group('akun', ['filter' => 'role:dosen,mahasiswa'], function ($routes){
+        $routes->get('pengajuandosen', 'PengajuanDosenController::ambilPengajuanUser');
+        $routes->get('pengajuanjudul', 'PengajuanJudulController::ambilPengajuanUser');
+        $routes->get('pengajuanjudul/(:segment)','PengajuanJudulController::show/$1');
+        $routes->get('pengajuandosen/(:segment)','PengajuanDosenController::show/$1');
     });
 
     // Dosen Only
     $routes->group('dosen', ['filter' => 'role:dosen'], function ($routes) {
-        $routes->get('pengajuandosen/nidn/(:segment)', 'PengajuanDosenController::ambildariNIDN/$1');
-        $routes->get('pengajuanjudul/nidn/(:segment)', 'PengajuanjudulController::ambildariNIDN/$1');
-        $routes->patch('pengajuandosen/decision/(:segment)', 'PengajuanDosenController::updateDecision/$1');
-        $routes->patch('pengajuanjudul/decision/(:segment)', 'PengajuanJudulController::updateDecision/$1');
+        $routes->patch('pengajuandosen/(:segment)', 'PengajuanDosenController::updateDecision/$1');
+        $routes->patch('pengajuanjudul/(:segment)', 'PengajuanJudulController::updateDecision/$1');
     });
 
     // Mahasiswa Only
     $routes->group('mahasiswa', ['filter' => 'role:mahasiswa'], function ($routes) {
-        $routes->get('pengajuandosen/npm/(:segment)', 'PengajuanDosenController::ambildariNPM/$1');
-        $routes->get('pengajuanjudul/npm/(:segment)', 'PengajuanjudulController::ambildariNPM/$1');
         $routes->post('pengajuanjudul/insert', 'PengajuanJudulController::insertJudul');
-        $routes->resource('pengajuandosen', ['controller' => 'PengajuanDosenController', 'placeholder' => '(:segment)']);
+        $routes->post('pengajuandosen/insert', 'PengajuanDosenController::create');
+        $routes->put('pengajuandosen/(:segment)', 'PengajuanDosenController::update/$1');
+        $routes->put('pengajuanjudul/(:segment)', 'PengajuanJudulController::update/$1');
+        $routes->delete('pengajuandosen/(:segment)', 'PengajuanDosenController::delete/$1');
+        $routes->delete('pengajuanjudul/(:segment)', 'PengajuanJudulController::delete/$1');
     });
+
 });

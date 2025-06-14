@@ -32,7 +32,16 @@ class DosenController extends ResourceController
      */
     public function show($id = null)
     {
-        //
+        $data = $this->model->find($id);
+
+        if (!$data) {
+            return $this->failNotFound("Data dengan ID $id tidak ditemukan.");
+        }
+
+        return $this->respond([
+            'message' => 'Data berhasil ditemukan.',
+            'data' => $data
+        ]);
     }
 
     /**
