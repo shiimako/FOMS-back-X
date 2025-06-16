@@ -26,7 +26,8 @@ class PengajuanDosenController extends ResourceController
         return $this->respond($data, 200);
     }
 
-    public function ambilPengajuanUser(){
+    public function ambilPengajuanUser()
+    {
 
         $user = AuthHelpers::getUserFromToken($this->request);
 
@@ -37,12 +38,15 @@ class PengajuanDosenController extends ResourceController
             $dosen = new DosenModel();
             $nidn = $dosen->getNIDNbyID($id);
 
-            $getpengajuan = $this->model->getbyNIDN($nidn);
+
+            if (!$nidn) {
+                return $this->failNotFound("NIDN tidak ditemukan untuk user ini.");
+            }
+
+            $getpengajuan = $this->model->getbyNIDNPending($nidn);
 
             if (!$getpengajuan) {
                 return $this->failNotFound('Pengajuan Dosen kepada dosen dengan NIDN = ' . $nidn . " tidak ada!!");
-            } else if ($getpengajuan['nidn'] !== $nidn) {
-                return $this->failForbidden("Kamu tidak punya akses ke pengajuan ini.");
             }
 
             // Kalau validasi berhasil, return balik
@@ -50,8 +54,7 @@ class PengajuanDosenController extends ResourceController
                 'message' => 'Data ditemukan',
                 'data_pengajuan_dosen' => $getpengajuan
             ], 200);
-
-        }else if ($user->role == "mahasiswa") {
+        } else if ($user->role == "mahasiswa") {
 
             $id = $user->id_user;
 
@@ -62,21 +65,52 @@ class PengajuanDosenController extends ResourceController
 
             if (!$getpengajuan) {
                 return $this->failNotFound('Pengajuan Dosen oleh Mahasiswa dengan NPM = ' . $npm . " tidak ada!!");
-            } else if ($getpengajuan['npm'] !== $npm) {
-                return $this->failForbidden("Kamu tidak punya akses ke pengajuan ini.");
             }
-    
+
             // Kalau validasi berhasil, return balik
             return $this->respond([
                 'message' => 'Data ditemukan',
                 'data_pengajuan_dosen' => $getpengajuan
             ], 200);
-        }else{
+        } else {
             return $this->failUnauthorized("Pengguna tidak dikenali, akses ditolak");
         }
     }
 
-    public function updateDecision($id){
+    public function ambilBimbingan()
+    {
+        $user = AuthHelpers::getUserFromToken($this->request);
+
+        if ($user->role == 'dosen') {
+
+            $id = $user->id_user;
+
+            $dosen = new DosenModel();
+            $nidn = $dosen->getNIDNbyID($id);
+
+
+            if (!$nidn) {
+                return $this->failNotFound("NIDN tidak ditemukan untuk user ini.");
+            }
+
+            $getpengajuan = $this->model->getbyNIDNApproved($nidn);
+
+            if (!$getpengajuan) {
+                return $this->failNotFound('Mahasiswa bimbingan kepada dosen dengan NIDN = ' . $nidn . " tidak ada!!");
+            }
+
+            // Kalau validasi berhasil, return balik
+            return $this->respond([
+                'message' => 'Data ditemukan',
+                'data_bimbingan' => $getpengajuan
+            ], 200);
+        }
+
+        return $this->failUnauthorized("Pengguna tidak dikenali, akses ditolak");
+    }
+
+    public function updateDecision($id)
+    {
 
         $data = $this->request->getJSON();
 
@@ -93,21 +127,23 @@ class PengajuanDosenController extends ResourceController
 
         $dosen = new DosenModel();
         $nidn = $dosen->getNIDNbyID($id_user);
-    
+
         // Cek apakah pengajuan ini milik user yang login
         if (!$pengajuan) {
             return $this->failNotFound("Pengajuan tidak ada");
-        }else if ($pengajuan['nidn'] !== $nidn){
+        } else if ($pengajuan['nidn'] !== $nidn) {
             return $this->failForbidden("Kamu tidak punya akses ke pengajuan ini.");
         }
 
         $update = $this->model->giveDecision($id, $status);
 
-        if (!$update)
-        {
-            return $this->fail(
-            "Update gagal dilakukan",
-            400);
+        if (!$update) {
+            if (!$update) {
+                return $this->fail(
+                    $this->model->errors() ?: 'Update gagal dilakukan',
+                    400
+                );
+            }
         }
 
         // Ambil ulang datanya
@@ -117,9 +153,74 @@ class PengajuanDosenController extends ResourceController
             'message' => 'Keputusan berhasil disimpan.',
             'data_pengajuan_dosen' => $data
         ], 200);
-
     }
-    
+
+    public function ambilPembimbing()
+    {
+        $user = AuthHelpers::getUserFromToken($this->request);
+
+        if ($user->role == 'mahasiswa') {
+            $id = $user->id_user;
+
+            $mahasiswa = new MahasiswaModel();
+            $npm = $mahasiswa->getNPMbyID($id);
+
+            $getpengajuan = $this->model->getDosenPembimbing($npm);
+
+            if (!$getpengajuan) {
+                return null;
+            }
+
+            // Kalau validasi berhasil, return balik
+            return $this->respond([
+                'message' => 'Data ditemukan',
+                'dosen' => $getpengajuan
+            ], 200);
+        } else {
+            return $this->failUnauthorized("Pengguna tidak dikenali, akses ditolak");
+        }
+    }
+
+    public function ambilbyNama($nama)
+    {
+        $user = AuthHelpers::getUserFromToken($this->request);
+        $id_user = $user->id_user;
+        $role = $user->role;
+
+        $pengajuan = null;
+
+        // Mahasiswa: cari dosen
+        if ($role === 'mahasiswa') {
+            $npm = (new MahasiswaModel())->getNPMbyID($id_user);
+            $pengajuan = $this->model->caribyNamaDsn($nama, $npm);
+
+            if (!$pengajuan) {
+                return $this->failNotFound("Pengajuan dosen tidak ditemukan.");
+            }
+        }
+
+        // Dosen: cari mahasiswa
+        elseif ($role === 'dosen') {
+            $nidn = (new DosenModel())->getNIDNbyID($id_user);
+            $pengajuan = $this->model->caribyNamaMhs($nama, $nidn);
+
+            if (!$pengajuan) {
+                return $this->failNotFound("Pengajuan dosen tidak ditemukan.");
+            }
+        }
+
+        // Role lain tidak boleh akses
+        else {
+            return $this->failForbidden("Role kamu tidak diizinkan mengakses data ini.");
+        }
+
+        return $this->respond([
+            'message' => 'Data pengajuan dosen berhasil ditemukan.',
+            'data_pengajuan_dosen' => $pengajuan
+        ]);
+    }
+
+
 
     /**
      * Return the properties of a resource object.
@@ -158,7 +259,7 @@ class PengajuanDosenController extends ResourceController
             'data_pengajuan_dosen' => $pengajuan
         ]);
     }
-    
+
 
     /**
      * Return a new resource object, with default properties.
@@ -177,9 +278,15 @@ class PengajuanDosenController extends ResourceController
      */
     public function create()
     {
+        $user = AuthHelpers::getUserFromToken($this->request);
+        $id = $user->id_user;
+        $npm = (new MahasiswaModel())->getNPMbyID($id);
         $data = $this->request->getJSON(true); // Ambil data JSON dari body requestt
+        $data['npm'] = trim(strval($npm));
+        $data['id_pengajuan_dosen'] = generateIdPengajuanDosen();
+        $tambah = $this->model->insert($data);
 
-        if (!$this->model->insert($data)) {
+        if (!$tambah) {
             return $this->fail($this->model->errors(), 400);
         }
 
@@ -210,34 +317,33 @@ class PengajuanDosenController extends ResourceController
      */
     public function update($id = null)
     {
-            $user = AuthHelpers::getUserFromToken($this->request);
-            $data = $this->request->getRawInput(true);
-        
-            // Cari data pengajuan berdasarkan ID
-            $pengajuan = $this->model->find($id);
+        $user = AuthHelpers::getUserFromToken($this->request);
+        $data = $this->request->getRawInput(true);
 
-            $id_user = $user->id_user;
+        // Cari data pengajuan berdasarkan ID
+        $pengajuan = $this->model->find($id);
 
-            $mahasiswa = new MahasiswaModel();
-            $npm = $mahasiswa->getNPMbyID($id_user);
-        
-            // Cek apakah pengajuan ini milik user yang login
-            if (!$pengajuan) {
-                return $this->failNotFound("Pengajuan tidak ada");
-            }else if ($pengajuan['npm'] !== $npm){
-                return $this->failForbidden("Kamu tidak punya akses ke pengajuan ini.");
-            }
-        
-            // Update kalau cocok
-            if (!$this->model->update($id, $data)) {
-                return $this->fail($this->model->errors(), 400);
-            }
-        
-            return $this->respond([
-                'message' => 'Update berhasil',
-                'data' => $data
-            ]);
-        
+        $id_user = $user->id_user;
+
+        $mahasiswa = new MahasiswaModel();
+        $npm = $mahasiswa->getNPMbyID($id_user);
+
+        // Cek apakah pengajuan ini milik user yang login
+        if (!$pengajuan) {
+            return $this->failNotFound("Pengajuan tidak ada");
+        } else if ($pengajuan['npm'] !== $npm) {
+            return $this->failForbidden("Kamu tidak punya akses ke pengajuan ini.");
+        }
+
+        // Update kalau cocok
+        if (!$this->model->update($id, $data)) {
+            return $this->fail($this->model->errors(), 400);
+        }
+
+        return $this->respond([
+            'message' => 'Update berhasil',
+            'data' => $data
+        ]);
     }
 
     /**
@@ -264,8 +370,10 @@ class PengajuanDosenController extends ResourceController
             return $this->failNotFound("Pengajuan tidak ada");
         } else if ($pengajuan['npm'] !== $npm) {
             return $this->failForbidden("Kamu tidak punya akses ke pengajuan ini.");
+        } else if ($pengajuan['status'] !== 'pending') {
+            return $this->failForbidden("Pengajuan hanya boleh dihapus apabila statusnya pending.");
         }
-        
+
         $this->model->delete($id);
 
         return $this->respondDeleted([

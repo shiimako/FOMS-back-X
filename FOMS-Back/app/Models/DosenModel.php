@@ -20,7 +20,8 @@ class DosenModel extends Model
 
     public function getNIDNbyID($id)
     {
-        return $this->where('id_user', $id)->first()['nidn'] ?? null;
+        $data = $this->where('id_user', $id)->first();
+        return $data['nidn'] ?? null;
     }
 
     public function updateByUserID($id_user, $data)

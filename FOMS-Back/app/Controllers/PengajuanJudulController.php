@@ -21,7 +21,7 @@ class PengajuanJudulController extends ResourceController
     {
         $data = [
             'message' => 'Selamat datang di API Pengajuan Judul',
-            'data_pengajuan_dosen' => $this->model->findAll()
+            'data_pengajuan_judul' => $this->model->findAll()
         ];
         return $this->respond($data, 200);
     }
@@ -29,6 +29,12 @@ class PengajuanJudulController extends ResourceController
     public function insertJudul()
     {
         $data = $this->request->getJSON(true); // auto jadi array
+        $user = AuthHelpers::getUserFromToken($this->request);
+        $id = $user->id_user;
+        $npm = (new MahasiswaModel())->getNPMbyID($id);
+        $data['npm'] = $npm;
+        $data['id_pengajuan_judul'] = generateIdPengajuanJudul();
+        
 
         if (empty($data['id_pengajuan_dosen']) || empty($data['npm']) || empty($data['judul'])) {
             return $this->failValidationErrors('id_pengajuan_dosen, npm, dan judul wajib diisi.');
@@ -65,8 +71,8 @@ class PengajuanJudulController extends ResourceController
 
             // Kalau validasi berhasil, return balik
             return $this->respond([
-                'message' => 'Data ditemukan',
-                'data_pengajuan_dosen' => $getpengajuan
+                'message' => 'Data Pengajuan Judul ditemukan',
+                'data_pengajuan_judul' => $getpengajuan
             ], 200);
 
         }else if ($user->role == "mahasiswa") {
@@ -84,9 +90,10 @@ class PengajuanJudulController extends ResourceController
     
             // Kalau validasi berhasil, return balik
             return $this->respond([
-                'message' => 'Data ditemukan',
-                'data_pengajuan_dosen' => $getpengajuan
+                'message' => 'Data Pengajuan Judul ditemukan',
+                'data_pengajuan_judul' => $getpengajuan
             ], 200);
+            
         }else{
             return $this->failUnauthorized("Pengguna tidak dikenali, akses ditolak");
         }
@@ -124,10 +131,7 @@ class PengajuanJudulController extends ResourceController
         $update = $this->model->giveDecision($id, $status, $saran);
 
         if (!$update) {
-            return $this->fail(
-                "Update gagal dilakukan",
-                400
-            );
+            return $this->model->errors();
         }
 
         // Ambil ulang datanya
@@ -225,7 +229,7 @@ class PengajuanJudulController extends ResourceController
         $data = $this->request->getRawInput(true);
     
         // Cari data pengajuan berdasarkan ID
-        $pengajuan = $this->model->find($id);
+        $pengajuan = $this->model->getJudulAndNpm($id);
 
         $id_user = $user->id_user;
 
@@ -262,7 +266,7 @@ class PengajuanJudulController extends ResourceController
         $user = AuthHelpers::getUserFromToken($this->request);
 
         // Cari data pengajuan berdasarkan ID
-        $pengajuan = $this->model->find($id);
+        $pengajuan = $this->model->getJudulAndNpm($id);
 
         $id_user = $user->id_user;
 
@@ -274,6 +278,8 @@ class PengajuanJudulController extends ResourceController
             return $this->failNotFound("Pengajuan tidak ada");
         } else if ($pengajuan['npm'] !== $npm) {
             return $this->failForbidden("Kamu tidak punya akses ke pengajuan ini.");
+        } else if ($pengajuan['status'] !== 'pending') {
+            return $this->failForbidden("Pengajuan hanya boleh dihapus apabila statusnya pending.");
         }
 
         $this->model->delete($id);

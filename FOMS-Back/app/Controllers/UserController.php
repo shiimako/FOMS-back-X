@@ -22,7 +22,7 @@ class UserController extends ResourceController
     {
         // Cek dulu modelnya kebaca atau nggak
         if (!is_object($this->model)) {
-            return $this->failServerError('Model not loaded properly.');
+            return $this->failServerError('Model tidak ditemukan');
         }
 
         $data = [
@@ -30,21 +30,21 @@ class UserController extends ResourceController
             'data_user' => $this->model->findAll()
         ];
         return $this->respond($data, 200);
-
     }
 
-    public function show($id = null){
+    public function show($id = null)
+    {
 
-            $data = $this->model->find($id);
-    
-            if (!$data) {
-                return $this->failNotFound("Data dengan ID $id tidak ditemukan.");
-            }
-    
-            return $this->respond([
-                'message' => 'Data berhasil ditemukan.',
-                'data' => $data
-            ]);
+        $data = $this->model->find($id);
+
+        if (!$data) {
+            return $this->failNotFound("Data dengan ID $id tidak ditemukan.");
+        }
+
+        return $this->respond([
+            'message' => 'Data berhasil ditemukan.',
+            'data' => $data
+        ]);
     }
 
     public function login()
@@ -77,20 +77,29 @@ class UserController extends ResourceController
                 'token' => $refresh_token,
                 'expired_at' => date('Y-m-d H:i:s', time() + (86400 * 7))
             ]
-            );
+        );
 
         // Kalau validasi berhasil, bisa kirim data user atau token dsb.
-        return $this->respond([
+        $response = service('response');
+        $response->setCookie([
+            'name'     => 'refresh_token',
+            'value'    => $refresh_token,
+            'expire'   => 60 * 60 * 24 * 7, // 7 hari
+            'httponly' => true,
+            'secure'   => false,
+            'samesite' => 'Lax'
+        ]);
+
+        return $response->setJSON([
             'message' => 'Login berhasil',
             'access_token' => $access_token,
-            'refresh_token' => $refresh_token,
             'user' => $user
-        ], 200);
+        ]);
     }
 
     public function refresh()
     {
-        $refreshToken = $this->request->getVar('refresh_token');
+        $refreshToken = $this->request->getCookie('refresh_token');
 
         // Cek token di database (misalnya pakai model)
         $record = $this->refreshTokenModel->where('token', $refreshToken)->first();
@@ -113,51 +122,82 @@ class UserController extends ResourceController
         ]);
     }
 
-    public function userprofile(){
+    public function logout()
+    {
+        $refreshToken = $this->request->getCookie('refresh_token');
+
+        if (!$refreshToken) {
+            return $this->failValidationErrors('Refresh token harus disertakan.');
+        }
+
+        $tokenData = $this->refreshTokenModel->gettoken($refreshToken);
+
+        if (!$tokenData) {
+            return $this->failNotFound('Token tidak ditemukan.');
+        }
+
+        $hapusrefresh = $this->refreshTokenModel->hapustoken($refreshToken);
+
+        if (!$hapusrefresh) {
+            return $this->fail("Gagal menghapus");
+        }
+
+        $response = service('response');
+        $response->deleteCookie('refresh_token');
+
+        return $response->setJSON([
+            'message' => 'Logout berhasil. Token dihapus.'
+        ]);
+    }
+
+
+    public function userprofile()
+    {
         $user = AuthHelpers::getUserFromToken($this->request);
 
         $id_user = $user->id_user;
         $role = $user->role;
 
-                // Cek berdasarkan role
-                if ($role === 'mahasiswa') {
-                    $profile = $this->model->getDataMahasiswaLengkapByID($id_user);
-                    if (!$profile){
-                        return $this->failNotFound("Profil Mahasiswa tidak ditemukan");
-                    }else if ($profile['id_user'] !== $id_user){
-                        return $this->failForbidden("Anda tidak memiliki hak akses pada profil mahasiswa ini!");
-                    }
-                    return $this->respond([
-                        'message' => 'Data Profil Mahasiswa berhasil ditemukan.',
-                        'profil' => $profile
-                        ]);
-                }
-                if ($role === 'dosen') {
-                    $profile = $this->model->getDataDosenLengkapByID($id_user);
-                    if (!$profile){
-                        return $this->failNotFound("Profil Dosen tidak ditemukan");
-                    }else if ($profile['id_user'] !== $id_user){
-                        return $this->failForbidden("Anda tidak memiliki hak akses pada profil dosen ini!");
-                    }
-                    return $this->respond([
-                        'message' => 'Data Profil Dosen berhasil ditemukan.',
-                        'profil' => $profile
-                        ]);
-                }if ($role === 'admin') {
-                    $profile = $this->model->getDataAdminLengkapByID($id_user);
-                    if (!$profile) {
-                    return $this->failNotFound("Profil Admin tidak ditemukan");
-                    } else if ($profile['id_user'] !== $id_user) {
-                    return $this->failForbidden("Anda tidak memiliki hak akses pada profil admin ini!");
-                    }
-                    return $this->respond([
-                        'message' => 'Data Profil Admin berhasil ditemukan.',
-                        'profil' => $profile
-                    ]);
-                }
+        // Cek berdasarkan role
+        if ($role === 'mahasiswa') {
+            $profile = $this->model->getDataMahasiswaLengkapByID($id_user);
+            if (!$profile) {
+                return $this->failNotFound("Profil Mahasiswa tidak ditemukan");
+            } else if ($profile['id_user'] !== $id_user) {
+                return $this->failForbidden("Anda tidak memiliki hak akses pada profil mahasiswa ini!");
+            }
+            return $this->respond([
+                'message' => 'Data Profil Mahasiswa berhasil ditemukan.',
+                'profil' => $profile
+            ]);
+        }
+        if ($role === 'dosen') {
+            $profile = $this->model->getDataDosenLengkapByID($id_user);
+            if (!$profile) {
+                return $this->failNotFound("Profil Dosen tidak ditemukan");
+            } else if ($profile['id_user'] !== $id_user) {
+                return $this->failForbidden("Anda tidak memiliki hak akses pada profil dosen ini!");
+            }
+            return $this->respond([
+                'message' => 'Data Profil Dosen berhasil ditemukan.',
+                'profil' => $profile
+            ]);
+        }
+        if ($role === 'admin') {
+            $profile = $this->model->getDataAdminLengkapByID($id_user);
+            if (!$profile) {
+                return $this->failNotFound("Profil Admin tidak ditemukan");
+            } else if ($profile['id_user'] !== $id_user) {
+                return $this->failForbidden("Anda tidak memiliki hak akses pada profil admin ini!");
+            }
+            return $this->respond([
+                'message' => 'Data Profil Admin berhasil ditemukan.',
+                'profil' => $profile
+            ]);
+        }
 
-                return $this->failForbidden("Tidak Punya Akses!!");
-     }
+        return $this->failForbidden("Tidak Punya Akses!!");
+    }
 
     public function updateProfile()
     {
@@ -172,7 +212,7 @@ class UserController extends ResourceController
         if (isset($input['email']))
             $userData['email'] = $input['email'];
         if (isset($input['password']))
-            $userData['password'] = password_hash($input['password'], PASSWORD_DEFAULT);
+            $userData['password'] = $input['password'];
 
         // Ambil model user utama
         $userModel = new \App\Models\UserModel();
@@ -204,7 +244,6 @@ class UserController extends ResourceController
                 'message' => 'Profil Mahasiswa berhasil diperbarui.',
                 'updated' => ['user' => $userData, 'mahasiswa' => $mhsData]
             ]);
-
         } elseif ($role === 'dosen') {
             $dosenModel = new \App\Models\DosenModel();
 
@@ -221,7 +260,6 @@ class UserController extends ResourceController
                 'message' => 'Profil Dosen berhasil diperbarui.',
                 'updated' => ['user' => $userData, 'dosen' => $dsnData]
             ]);
-
         } elseif ($role === 'admin') {
             // Admin hanya update dari tabel user
             return $this->respond([
@@ -233,38 +271,14 @@ class UserController extends ResourceController
         return $this->failForbidden("Tidak punya akses.");
     }
 
-
-    public function logout()
+    public function create()
     {
-        $refreshToken = $this->request->getVar('refresh_token');
+        $data = $this->request->getJSON(true);
+        $data['id_user'] = generateIdUser();
 
-        if (!$refreshToken) {
-            return $this->failValidationErrors('Refresh token harus disertakan.');
-        }
-
-        $tokenData = $this->refreshTokenModel->gettoken($refreshToken);
-
-        if (!$tokenData) {
-            return $this->failNotFound('Token tidak ditemukan.');
-        }
-
-        $hapusrefresh = $this->refreshTokenModel->hapustoken($refreshToken);
-
-        if (!$hapusrefresh){
-            return $this->fail("Gagal menghapus");
-        }
-
-        return $this->respond([
-            'message' => 'Logout berhasil. Token dihapus.'
-        ], 200);
-    }
-
-    public function add()
-    {
-        $data = $this->request->getRawInput(true);
         if (!$this->model->insert($data)) {
             return $this->fail($this->model->errors());
-        }else{
+        } else {
             return $this->respondCreated([
                 'message' => 'Data User berhasil ditambahkan',
                 'data' => $data
@@ -279,14 +293,14 @@ class UserController extends ResourceController
         $role = $this->request->getVar('role');
 
         if (!$this->model->find($id)) {
-            return $this->failNotFound("User dengan ID ".$id." tidak ditemukan.");
+            return $this->failNotFound("User dengan ID " . $id . " tidak ditemukan.");
         }
 
         if (!$email) {
             return $this->failValidationErrors('Email Kosong');
-        }elseif (!$password) {
+        } elseif (!$password) {
             return $this->failValidationErrors('Password Kosong');
-        }elseif (!$role) {
+        } elseif (!$role) {
             return $this->failValidationErrors('Role Kosong');
         }
 
@@ -297,7 +311,7 @@ class UserController extends ResourceController
         ];
         $update = $this->model->update($id, $data);
 
-        if (!$update){
+        if (!$update) {
             return $this->fail('Data tidak dapat diupdate!!');
         }
 
@@ -310,7 +324,7 @@ class UserController extends ResourceController
     public function delete($id = null)
     {
         if (!$this->model->find($id)) {
-            return $this->failNotFound("User dengan ID ".$id." tidak ditemukan.");
+            return $this->failNotFound("User dengan ID " . $id . " tidak ditemukan.");
         }
         $delete = $this->model->delete($id);
 
@@ -319,8 +333,7 @@ class UserController extends ResourceController
         }
 
         return $this->respond([
-            'message' => "id [".$id."] berhasil dihapus!!"
+            'message' => "id [" . $id . "] berhasil dihapus!!"
         ], 200);
     }
-
 }

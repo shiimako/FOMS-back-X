@@ -8,7 +8,7 @@ class PengajuanJudulModel extends Model
 {
     protected $table            = 'pengajuan_judul';
     protected $primaryKey       = 'id_pengajuan_judul';
-    protected $useAutoIncrement = true;
+    protected $useAutoIncrement = false;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
@@ -96,7 +96,11 @@ class PengajuanJudulModel extends Model
             ]);
     }
 
-
+    public function getJudulAndNpm($id){
+        return $this->db->table('pengajuan_judul pj')
+        ->select('pj.*,pd.npm')->join('pengajuan_dosen pd', 'pd.id_pengajuan_dosen = pj.id_pengajuan_dosen')
+        ->where('pj.id_pengajuan_judul',$id)->get()->getRowArray();
+    }
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

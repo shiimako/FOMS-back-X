@@ -8,36 +8,86 @@ class PengajuanDosenModel extends Model
 {
     protected $table            = 'pengajuan_dosen';
     protected $primaryKey       = 'id_pengajuan_dosen';
-    protected $useAutoIncrement = true;
+    protected $useAutoIncrement = false;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
         'id_pengajuan_dosen',
-        'id_mhs',
-        'id_dosen',
+        'npm',
+        'nidn',
         'tgl_pengajuan',
         'status',
     ];
 
-    // Ngelihat Pengajuan Dosen by NIDN (pov Dosen)
-    public function getbyNIDN($nidn){
+    // Ngelihat Pengajuan Dosen by NIDN - Pending(pov Dosen)
+    public function getbyNIDNPending($nidn)
+    {
         return $this->db->table('pengajuan_dosen pd')
-        ->select('pd.*')
-        ->join('dosen d', 'pd.nidn = d.nidn')
-        ->where('d.nidn', $nidn)
-        ->get()
-        ->getResult();
+            ->select('pd.*')
+            ->join('dosen d', 'pd.nidn = d.nidn')
+            ->where('d.nidn', $nidn)
+            ->where('pd.status', 'pending')
+            ->get()
+            ->getResult();
+    }
+
+    // Ngelihat Pengajuan Dosen by NIDN - Approved (pov Dosen)
+    public function getbyNIDNApproved($nidn)
+    {
+        return $this->db->table('pengajuan_dosen pd')
+            ->select('pd.*')
+            ->join('dosen d', 'pd.nidn = d.nidn')
+            ->where('d.nidn', $nidn)
+            ->where('pd.status', 'approved')
+            ->get()
+            ->getResult();
     }
 
     // Ngelihat Pengajuan Dosen by NPM (pov Mahasiswa)
-    public function getbyNPM($npm){
+    public function getbyNPM($npm)
+    {
         return $this->db->table('pengajuan_dosen pd')
-        ->select('pd.*')
-        ->join('mahasiswa m', 'pd.npm = m.npm')
-        ->where('m.npm', $npm)
-        ->get()
-        ->getResult();
+            ->select('pd.*')
+            ->join('mahasiswa m', 'pd.npm = m.npm')
+            ->where('m.npm', $npm)
+            ->get()
+            ->getResult();
+    }
+
+    public function caribyNamaMhs($nama, $nidn)
+    {
+        return $this->db->table('pengajuan_dosen pd')
+             ->select('pd.*, d.nama_dosen, m.nama_mhs')
+            ->join('mahasiswa m', 'pd.npm = m.npm')
+            ->join('dosen d', 'pd.nidn = d.nidn')
+            ->like('m.nama_mhs', $nama)
+            ->where('d.nidn', $nidn);
+    }
+
+    public function caribyNamaDsn($nama, $npm)
+    {
+        return $this->db->table('pengajuan_dosen pd')
+            ->select('pd.*, d.nama_dosen, m.nama_mhs')
+            ->join('mahasiswa m', 'pd.npm = m.npm')
+            ->join('dosen d', 'pd.nidn = d.nidn')
+            ->like('d.nama_dosen', $nama)
+            ->where('m.npm', $npm)
+            ->get()
+            ->getRowArray();
+    }
+
+    // Ngelihat Pengajuan Dosen by NPM (pov Mahasiswa)
+    public function getDosenPembimbing($npm)
+    {
+        return $this->db->table('pengajuan_dosen pd')
+            ->select('d.nidn, d.nama_dosen')
+            ->join('dosen d', 'pd.nidn = d.nidn')
+            ->join('mahasiswa m', 'pd.npm = m.npm')
+            ->where('m.npm', $npm)
+            ->where('pd.status', 'approved')
+            ->get()
+            ->getResult();
     }
 
     // Edit Pengajuan Dosen oleh Dosen (Setuju atau Tolak)

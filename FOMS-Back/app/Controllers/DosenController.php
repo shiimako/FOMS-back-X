@@ -62,6 +62,7 @@ class DosenController extends ResourceController
     public function create()
     {
         $data = $this->request->getJSON(true); // Ambil data JSON dari body request
+        $data['id_dosen'] = generateIdDosen();
 
         if (!$this->model->insert($data)) {
             return $this->fail($this->model->errors(), 400);
@@ -94,14 +95,14 @@ class DosenController extends ResourceController
      */
     public function update($id = null)
     {
-        $data = $this->request->getRawInput(true) ?? $this->request->getPost();
+        $data = $this->request->getJSON(true);
 
         // Cek apakah data mahasiswa dengan $id ada
         if (!$this->model->find($id)) {
             return $this->failNotFound("Dosen dengan ID $id tidak ditemukan");
         }
 
-        // Update data mahasiswa
+        // Update data dosen
         if (!$this->model->update($id, $data)) {
             return $this->fail($this->model->errors(), 400);
         }

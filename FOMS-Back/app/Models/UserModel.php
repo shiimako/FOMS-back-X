@@ -50,8 +50,8 @@ class UserModel extends Model
 
     public function getDataAdminLengkapByID($id_user)
     {
-        return $this->select('id_user, u.email, u.password')
-            ->where('u.id_user', $id_user)
+        return $this->select('id_user, email, password')
+            ->where('id_user', $id_user)
             ->get()
             ->getRowArray(); // hasilnya berupa object juga
     }
@@ -75,7 +75,7 @@ class UserModel extends Model
     protected $validationRules = [
         'id_user' => 'required',
         'email' => 'required|valid_email',
-        'password' => 'required',
+         'password' => 'required|min_length[6]',
         'role' => 'required'
     ];
     protected $validationMessages   = [];
