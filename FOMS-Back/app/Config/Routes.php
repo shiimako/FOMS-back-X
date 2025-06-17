@@ -30,6 +30,7 @@ $routes->group('', ['filter' => 'jwt'], function ($routes) {
 
     // Admin Only
     $routes->group('admin', ['filter' => 'role:admin'], function ($routes) {
+        $routes->get('/', 'UserController::welcome'); // Welcome admin
         $routes->resource('user', ['controller' => 'UserController', 'placeholder' => '(:segment)']); // CRUD user
         $routes->resource('dosen', ['controller' => 'DosenController', 'placeholder' => '(:segment)']); // CRUD dosen
         $routes->resource('mahasiswa', ['controller' => 'MahasiswaController', 'placeholder' => '(:segment)']); // CRUD mahasiswa
@@ -41,6 +42,7 @@ $routes->group('', ['filter' => 'jwt'], function ($routes) {
 
     // Dosen Only
     $routes->group('dosen', ['filter' => 'role:dosen'], function ($routes) {
+        $routes->get('/', 'UserController::welcome'); // Welcome dosen
         $routes->get('pengajuandosen', 'PengajuanDosenController::ambilPengajuanUser'); // R semua pengajuan dosen
         $routes->get('bimbingan', 'PengajuanDosenController::ambilBimbingan'); // R semua bimbingan dosen
         $routes->get('pengajuanjudul', 'PengajuanJudulController::ambilPengajuanUser'); // R semua pengajuan judul
@@ -53,6 +55,7 @@ $routes->group('', ['filter' => 'jwt'], function ($routes) {
 
     // Mahasiswa Only
     $routes->group('mahasiswa', ['filter' => 'role:mahasiswa'], function ($routes) {
+        $routes->get('/', 'UserController::welcome'); // Welcome mahasiswa
         $routes->get('pengajuandosen', 'PengajuanDosenController::ambilPengajuanUser'); // R semua pengajuan dosen
         $routes->get('pengajuanjudul', 'PengajuanJudulController::ambilPengajuanUser'); // R semua pengajuan judul
         $routes->get('pembimbing', 'PengajuanDosenController::ambilPembimbing'); // R semua pembimbing mahasiswa

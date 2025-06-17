@@ -18,6 +18,13 @@ class UserController extends ResourceController
         $this->refreshTokenModel = new RefreshTokenModel();
     }
 
+    public function welcome(){
+        $user = AuthHelpers::getUserFromToken($this->request);
+        $id = $user->id_user;
+
+        return $this-> respond(['message' => 'Welcome '.$id.'!!'], 200);
+    }
+
     public function index()
     {
         // Cek dulu modelnya kebaca atau nggak
