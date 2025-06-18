@@ -29,7 +29,7 @@ class PengajuanDosenModel extends Model
             ->where('d.nidn', $nidn)
             ->where('pd.status', 'pending')
             ->get()
-            ->getResult();
+            ->getResultArray();
     }
 
     // Ngelihat Pengajuan Dosen by NIDN - Approved (pov Dosen)
@@ -41,7 +41,7 @@ class PengajuanDosenModel extends Model
             ->where('d.nidn', $nidn)
             ->where('pd.status', 'approved')
             ->get()
-            ->getResult();
+            ->getResultArray();
     }
 
     // Ngelihat Pengajuan Dosen by NPM (pov Mahasiswa)
@@ -52,7 +52,7 @@ class PengajuanDosenModel extends Model
             ->join('mahasiswa m', 'pd.npm = m.npm')
             ->where('m.npm', $npm)
             ->get()
-            ->getResult();
+            ->getResultArray();
     }
 
     public function caribyNamaMhs($nama, $nidn)

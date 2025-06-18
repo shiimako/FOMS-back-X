@@ -25,7 +25,7 @@ $routes->delete('/logout', 'UserController::logout'); // logout
 $routes->group('', ['filter' => 'jwt'], function ($routes) {
 
     $routes->get('user/profile', 'UserController::userprofile'); // R user
-    $routes->put('user/profileupdate', 'UserController::updateProfile'); // U profile user
+    $routes->patch('user/profile', 'UserController::updateProfile'); // U profile user
 
 
     // Admin Only
@@ -64,9 +64,8 @@ $routes->group('', ['filter' => 'jwt'], function ($routes) {
         $routes->get('pengajuandosen/cari/(:segment)', 'PengajuanDosenController::ambilbyNama/$1'); // R pengajuan dosen berdasarkan nama
         $routes->post('pengajuanjudul', 'PengajuanJudulController::insertJudul'); // C pengajuan judul
         $routes->post('pengajuandosen', 'PengajuanDosenController::create'); // C pengajuan dosen
-        // $routes->put('pengajuandosen/(:segment)', 'PengajuanDosenController::update/$1');
-        // $routes->put('pengajuanjudul/(:segment)', 'PengajuanJudulController::update/$1');
         $routes->delete('pengajuandosen/(:segment)', 'PengajuanDosenController::delete/$1'); // D pengajuan dosen
         $routes->delete('pengajuanjudul/(:segment)', 'PengajuanJudulController::delete/$1'); // D pengajuan judul
+        $routes->get('dosen/', 'DosenController::index'); //Read semua dosen
     });
 });

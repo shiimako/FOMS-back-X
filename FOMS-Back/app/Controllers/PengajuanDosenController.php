@@ -49,6 +49,12 @@ class PengajuanDosenController extends ResourceController
                 return $this->failNotFound('Pengajuan Dosen kepada dosen dengan NIDN = ' . $nidn . " tidak ada!!");
             }
 
+            foreach ($getpengajuan as &$pengajuan) {
+                $npm = $pengajuan['npm'];
+                $mahasiswa = (new MahasiswaModel())->find($npm);
+                $pengajuan['nama_mhs'] = $mahasiswa['nama_mhs'] ?? '-';
+            }
+
             // Kalau validasi berhasil, return balik
             return $this->respond([
                 'message' => 'Data ditemukan',
@@ -65,6 +71,13 @@ class PengajuanDosenController extends ResourceController
 
             if (!$getpengajuan) {
                 return $this->failNotFound('Pengajuan Dosen oleh Mahasiswa dengan NPM = ' . $npm . " tidak ada!!");
+            }
+
+            // Tambahkan nama_dosen ke setiap item
+            foreach ($getpengajuan as &$pengajuan) {
+                $nidn = $pengajuan['nidn'];
+                $dosen = (new DosenModel())->find($nidn);
+                $pengajuan['nama_dosen'] = $dosen['nama_dosen'] ?? '-';
             }
 
             // Kalau validasi berhasil, return balik
@@ -94,6 +107,11 @@ class PengajuanDosenController extends ResourceController
             }
 
             $getpengajuan = $this->model->getbyNIDNApproved($nidn);
+            foreach ($getpengajuan as &$pengajuan) {
+                $npm = $pengajuan['npm'];
+                $mahasiswa = (new MahasiswaModel())->find($npm);
+                $pengajuan['nama_mhs'] = $mahasiswa['nama_mhs'] ?? '-';
+            }
 
             if (!$getpengajuan) {
                 return $this->failNotFound('Mahasiswa bimbingan kepada dosen dengan NIDN = ' . $nidn . " tidak ada!!");

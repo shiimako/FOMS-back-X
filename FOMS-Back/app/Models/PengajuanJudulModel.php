@@ -28,7 +28,7 @@ class PengajuanJudulModel extends Model
             ->join('pengajuan_dosen pd', 'pj.id_pengajuan_dosen = pd.id_pengajuan_dosen')
             ->where('pd.nidn', $nidn)
             ->get()
-            ->getResult();
+            ->getResultArray();
     }
 
     public function getbyNPM($npm)
@@ -38,13 +38,13 @@ class PengajuanJudulModel extends Model
             ->join('pengajuan_dosen pd', 'pj.id_pengajuan_dosen = pd.id_pengajuan_dosen')
             ->where('pd.npm', $npm)
             ->get()
-            ->getResult();
+            ->getResultArray();
     }
 
     public function getIdentityByIDJudul($id_pengajuan_judul)
     {
         return $this->db->table('pengajuan_judul pj')
-            ->select('pj.id_pengajuan_judul, pd.id_pengajuan_dosen, m.npm, d.nidn')
+            ->select('pj.id_pengajuan_judul, pd.id_pengajuan_dosen, m.npm, m.nama_mhs, d.nidn, d.nama_dosen')
             ->join('pengajuan_dosen pd', 'pj.id_pengajuan_dosen = pd.id_pengajuan_dosen')
             ->join('mahasiswa m', 'm.npm = pd.npm')
             ->join('dosen d', 'd.nidn = pd.nidn')

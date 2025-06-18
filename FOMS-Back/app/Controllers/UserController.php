@@ -102,12 +102,16 @@ class UserController extends ResourceController
             $id = $user['id_user'];
             $mahasiswa = $this->model->getDataMahasiswaLengkapByID($id);
             $nama = $mahasiswa['nama_mhs'];
+            $npm = $mahasiswa['npm'];
             $user['nama'] = $nama;
+            $user['npm'] = $npm;
         }else if ($user['role'] == "dosen"){
             $id = $user['id_user'];
             $dosen = $this->model->getDataDosenLengkapByID($id);
             $nama = $dosen['nama_dosen'];
+            $nidn = $dosen['nidn'];
             $user['nama'] = $nama;
+            $user['nidn'] = $nidn;
         }else if ($user['role'] == "admin"){
             $user['nama'] = "Admin";
         }
