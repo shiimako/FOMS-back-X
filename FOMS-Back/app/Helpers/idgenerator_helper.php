@@ -18,9 +18,6 @@ function generateKode($table, $kolom, $prefix)
     return $prefix . $newNumber;
 }
 
-function generateIdMahasiswa() {
-    return generateKode('mahasiswa', 'id_mahasiswa', 'M');
-}
 
 function generateIdUser() {
     return generateKode('users', 'id_user', 'U');
@@ -34,8 +31,5 @@ function generateIdPengajuanJudul() {
     return generateKode('pengajuan_judul', 'id_pengajuan_judul', 'PJ');
 }
 
-function generateIdDosen() {
-    return generateKode('dosen', 'id_dosen', 'D');
-}
 
 ?>

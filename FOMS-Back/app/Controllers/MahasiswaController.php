@@ -41,7 +41,6 @@ class MahasiswaController extends ResourceController
     public function create()
     {
         $data = $this->request->getJSON(true); // Ambil data JSON dari body request
-        $data['id_mahasiswa'] = generateIdMahasiswa();
 
         if (!$this->model->insert($data)) {
             return $this->fail($this->model->errors());
