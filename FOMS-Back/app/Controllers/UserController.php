@@ -6,6 +6,7 @@ use App\Models\RefreshTokenModel;
 use App\Libraries\AuthHelpers;
 use CodeIgniter\RESTful\ResourceController;
 use App\Libraries\JWTService;
+use App\Models\MahasiswaModel;
 use Firebase\JWT\JWT;
 
 class UserController extends ResourceController
@@ -96,6 +97,20 @@ class UserController extends ResourceController
             'secure'   => false,
             'samesite' => 'Lax'
         ]);
+
+        if($user['role'] == "mahasiswa"){
+            $id = $user['id_user'];
+            $mahasiswa = $this->model->getDataMahasiswaLengkapByID($id);
+            $nama = $mahasiswa['nama_mhs'];
+            $user['nama'] = $nama;
+        }else if ($user['role'] == "dosen"){
+            $id = $user['id_user'];
+            $dosen = $this->model->getDataDosenLengkapByID($id);
+            $nama = $dosen['nama_dosen'];
+            $user['nama'] = $nama;
+        }else if ($user['role'] == "admin"){
+            $user['nama'] = "Admin";
+        }
 
         return $response->setJSON([
             'message' => 'Login berhasil',
